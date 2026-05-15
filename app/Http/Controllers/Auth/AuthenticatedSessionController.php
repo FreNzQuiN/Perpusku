@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Sanctum\TransientToken;
 
 use Illuminate\Http\JsonResponse;
 
@@ -51,8 +52,12 @@ class AuthenticatedSessionController extends Controller
         $user = Auth::user();
 
         // Revoke token if it exists
-        if ($user && method_exists($user, 'currentAccessToken') && $user->currentAccessToken()) {
-            $user->currentAccessToken()->delete();
+        if ($user && method_exists($user, 'currentAccessToken')) {
+            $currentAccessToken = $user->currentAccessToken();
+
+            if ($currentAccessToken && !$currentAccessToken instanceof TransientToken && method_exists($currentAccessToken, 'delete')) {
+                $currentAccessToken->delete();
+            }
         }
 
         Auth::guard('web')->logout();
