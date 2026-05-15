@@ -42,6 +42,22 @@ class CartController extends Controller
             ], 422);
         }
 
+        $existingCartItem = Cart::where('user_id', $request->user()->id)
+            ->where('book_id', $request->book_id)
+            ->first();
+
+        $currentCartCount = Cart::where('user_id', $request->user()->id)->count();
+
+        if (!$existingCartItem && $currentCartCount >= 10) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Keranjang penuh',
+                'errors' => [
+                    'book_id' => ['Maksimal 10 buku dapat ditambahkan ke keranjang pinjaman. Silakan hapus salah satu buku terlebih dahulu.']
+                ]
+            ], 422);
+        }
+
         $cart = Cart::updateOrCreate(
             ['user_id' => $request->user()->id, 'book_id' => $request->book_id]
         );
