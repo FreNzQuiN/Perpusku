@@ -68,8 +68,30 @@ class BorrowingController extends Controller
             ]);
 
             foreach ($request->book_ids as $bookId) {
-                // Decrement stock (already validated above)
-                $book = Book::lockForUpdate()->find($bookId);
+                // Re-check stock inside the transaction to prevent race-condition leaks.
+                $book = Book::whereKey($bookId)->lockForUpdate()->first();
+
+                if (!$book) {
+                    DB::rollBack();
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Maaf, salah satu buku tidak ditemukan',
+                        'errors' => ['book_ids' => ['Salah satu buku yang dipilih sudah tidak tersedia.']]
+                    ], 422);
+                }
+
+                if ($book->stock <= 0) {
+                    DB::rollBack();
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Maaf, beberapa buku tidak tersedia',
+                        'errors' => ['book_ids' => ['Buku ' . $book->title . ' sedang habis stoknya.']]
+                    ], 422);
+                }
+
+                // Decrement stock after the availability check passes.
                 $book->decrement('stock');
 
                 BorrowingDetail::create([
@@ -89,12 +111,14 @@ class BorrowingController extends Controller
                 'data' => $borrowing->load('details.book')
             ], 201);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
+
+            report($e);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Internal server error',
-                'error' => $e->getMessage()
+                'message' => 'Terjadi kesalahan pada sistem. Silakan coba lagi nanti.'
             ], 500);
         }
     }

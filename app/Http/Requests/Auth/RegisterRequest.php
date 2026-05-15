@@ -17,6 +17,19 @@ class RegisterRequest extends FormRequest
     }
 
     /**
+     * Normalize incoming data before validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'name' => is_string($this->input('name')) ? trim($this->input('name')) : $this->input('name'),
+            'email' => is_string($this->input('email')) ? strtolower(trim($this->input('email'))) : $this->input('email'),
+            'password' => is_string($this->input('password')) ? trim($this->input('password')) : $this->input('password'),
+            'password_confirmation' => is_string($this->input('password_confirmation')) ? trim($this->input('password_confirmation')) : $this->input('password_confirmation'),
+        ]);
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
