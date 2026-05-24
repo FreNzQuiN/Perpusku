@@ -15,13 +15,13 @@ Library management system (Sistem Perpustakaan). Monolithic Laravel 12 app with 
 | Sanctum | ^4.0 |
 | MySQL (dev) / SQLite (testing) | — |
 
-### Frontend (JavaScript) — Blade + Bootstrap 5 CDN + vanilla JS
+### Frontend (JavaScript) — Blade + Bootstrap 5 (npm + Vite) + vanilla JS
 | Component | Version |
 |-----------|---------|
 | Build Tool | Vite ^6.0 (dev-only) |
 | Tailwind CSS | ^4.0 (via Vite, unused in Blade) |
 | React/MUI/Zustand/etc | devDependencies only (not used in UI) |
-| Bootstrap 5 | CDN (actual UI framework) |
+| Bootstrap 5 | npm + Vite (actual UI framework) |
 
 ### Dev/Testing
 | Tool | Version |
@@ -94,6 +94,10 @@ database/
 └── seeders/
     ├── BookSeeder.php
     └── DatabaseSeeder.php
+
+lang/
+├── en/borrowing.php             — English translations
+└── id/borrowing.php             — Indonesian translations
 
 resources/views/
 ├── layouts/app.blade.php        — main layout (topbar, sidebar, content, toast system)
@@ -205,9 +209,9 @@ tests/
 | GET | `/` | — | Redirects to dashboard or login |
 | GET | `/login` | Guest | Login page |
 | GET | `/register` | Guest | Register page |
-| POST | `/login` | Guest | Web login (returns 204 or redirect) |
-| POST | `/register` | Guest | Web register (returns 204 or redirect) |
-| POST | `/logout` | Auth | Web logout (returns 204) |
+| POST | `/login` | Guest | Web login (redirect to dashboard) |
+| POST | `/register` | Guest | Web register (redirect to dashboard) |
+| POST | `/logout` | Auth | Web logout (redirect to login) |
 | GET | `/dashboard` | Auth | Dashboard with borrowing history |
 | GET | `/search-books` | Auth | Book search page |
 | GET | `/manage-cart` | Auth | Cart management |
@@ -269,19 +273,12 @@ All API responses follow `{success: bool, message: string, data?: ..., errors?: 
 
 ## Frontend Conventions
 
-### `apiFetch()` (in `app.blade.php`)
-- Resolves `/api/...` to full API URL
-- Attaches CSRF token and Bearer token
-- Auto-redirects on 401
-
-### Notification System
-- `showNotification(message, type)` where type: `success`|`error`|`info`
-- Slides in from top-right, auto-dismisses after 3s
-- Defined in `app.blade.php`
-
-### Inline JavaScript
-- All page-specific JS in `@section('scripts')` in each Blade template
-- No module bundling for JS (uses vanilla `fetch()`)
+### Script Organization (`resources/js/app.js`)
+- All JS bundled via Vite (ES module)
+- Shared utilities: `apiFetch()`, `showNotification()`, `showConfirmDialog()`, `esc()`, `BOOK_SVG`
+- Layout behavior: sidebar toggle, profile dropdown, nav highlighting
+- Page-specific logic guarded by `document.getElementById()` existence checks
+- Functions called from `onclick` attributes exposed on `window`
 
 ---
 
@@ -315,38 +312,16 @@ php artisan test --filter='test_search_case_insensitive'  # specific test
 
 ---
 
-## Improvements Implemented (this session)
+## Improvements Applied
 
 ### Critical
-- **LIKE Injection fix**: `%` and `_` escaped with backslash in `BookController`
-- **TOCTOU race condition fix**: Stock validation inside `DB::transaction()` with `lockForUpdate`
-- **CSS gradient fix**: `background-color` → `background` in `dashboard.blade.php`
+- **LIKE injection fix**, **TOCTOU race condition** (lockForUpdate inside transaction), **N+1 → subquery** in BookController, **batch stock decrement** (N→1 UPDATE), **Eloquent createMany** (model events, auto-timestamps), **Extracted inline CSS/JS** (~1,900 lines) → Vite-bundled `app.css`/`app.js`, **Web register redirect** (204→302)
 
-### High
-- **N+1 query fix**: Batch fetch books + batch insert borrowing details
-- **Missing index**: Added `INDEX` on `books.title`
-- **Pagination**: `BookController::index()` uses `->paginate(20)`
-- **React/MUI unused deps**: Moved 12 packages from `dependencies` → `devDependencies`
-- **Vite config**: Created `vite.config.js`
+### High  
+- **Pagination** (paginate 20), **Vite config**, **I18n** (hardcoded string → `__()` + lang files), **removed global Throwable handler**, **API rate limiting** (60 req/min), **return type hints** all controllers, **Bootstrap via npm** (no CDN), **server-side user name** (eliminated extra API call)
 
 ### Medium
-- **Form Requests**: `StoreCartRequest`, `StoreBorrowingRequest`
-- **Global validation handler**: `ValidationException` returns consistent 422 JSON
-- **Service layer**: `BorrowingService` extracted from controller
-- **API Resources**: BookResource, CartResource, BorrowingResource, BorrowingDetailResource
+- **FormRequests** (StoreCart, StoreBorrowing), **validation handler** (consistent 422 JSON), **BorrowingService** extracted, **API Resources** (4 resources), **SoftDeletes** on borrowings, **case-insensitive email**, **footer consolidated** into layout (DRY)
 
 ### Low
-- **alert() → Toast**: Custom `showNotification()` system replacing `alert()`
-- **Soft Deletes**: Added to `Borrowing` and `BorrowingDetail` models + migration
-- **Cleanup**: Removed unused imports, CSS universal reset
-- **Stock check duality**: Removed stock check from cart add (validated only at borrow)
-- **Case-insensitive email**: LoginRequest and RegisterRequest normalize email to lowercase
-
----
-
-## Pre-existing Fixes Applied This Session
-- `RegisteredUserController::store()` return type widened to include `RedirectResponse`
-- `AuthenticatedSessionController::store()` catches `ValidationException` to return 401 for API, `response()->noContent()` for web
-- `AuthenticatedSessionController::destroy()` returns `response()->noContent()` for web
-- `RegisterRequest::validationData()` lowercases email before unique validation
-- `LoginRequest::prepareForValidation()` lowercases and trims email
+- **alert()→Toast** notification system, **cleanup** unused imports/CSS, **stock check** removed from cart add, **PSR formatting**, **commented dead code** removed

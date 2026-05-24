@@ -47,13 +47,4 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
-        $exceptions->render(function (\Throwable $e, $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Internal server error',
-                    'error' => config('app.debug') ? $e->getMessage() : 'Something went wrong'
-                ], 500);
-            }
-        });
     })->create();

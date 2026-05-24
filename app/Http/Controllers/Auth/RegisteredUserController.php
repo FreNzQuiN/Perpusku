@@ -41,6 +41,6 @@ class RegisteredUserController extends Controller
             ], 201);
         }
 
-        return response()->noContent();
+        return redirect()->route('dashboard');
     }
 }

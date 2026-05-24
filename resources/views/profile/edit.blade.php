@@ -3,21 +3,6 @@
 @section('title', 'Profile')
 
 @section('content')
-    <style>
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-            font-size: 32px;
-            color: white;
-            font-weight: 700;
-        }
-    </style>
 
     <div class="row justify-content-center">
         <div class="col-md-6">

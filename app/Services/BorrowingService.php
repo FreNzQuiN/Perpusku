@@ -20,7 +20,7 @@ class BorrowingService
             foreach ($data['book_ids'] as $bookId) {
                 $book = $books->get($bookId);
                 if (!$book || $book->stock <= 0) {
-                    throw new \RuntimeException('Maaf, beberapa buku tidak tersedia');
+                    throw new \RuntimeException(__('borrowing.out_of_stock'));
                 }
             }
 
@@ -30,18 +30,13 @@ class BorrowingService
                 'duration_days' => $data['duration_days'],
             ]);
 
-            $details = [];
-            foreach ($books as $bookId => $book) {
-                $book->decrement('stock');
-                $details[] = [
-                    'borrowing_id' => $borrowing->id,
-                    'book_id' => $bookId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            }
+            Book::whereIn('id', $data['book_ids'])->decrement('stock');
 
-            DB::table('borrowing_details')->insert($details);
+            $borrowing->details()->createMany(
+                collect($data['book_ids'])->map(fn($bookId) => [
+                    'book_id' => $bookId,
+                ])->all()
+            );
 
             Cart::where('user_id', $userId)
                 ->whereIn('book_id', $data['book_ids'])
