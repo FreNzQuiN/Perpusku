@@ -1,19 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Perpusku - @yield('title')</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         :root {
             --color-primary: #2563eb;
             --color-secondary: #8b5cf6;
@@ -164,6 +158,7 @@
             display: grid;
             grid-template-columns: 240px 1fr;
             flex: 1;
+            min-height: 0;
         }
 
         /* SIDEBAR */
@@ -173,8 +168,14 @@
             padding: 20px 0;
             display: flex;
             flex-direction: column;
-            height: 100%;
+            height: calc(100vh - 60px);
+            position: sticky;
+            top: 0;
             overflow-y: auto;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
         }
 
         .sidebar-nav {
@@ -211,6 +212,11 @@
 
         .nav-item .icon {
             font-size: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
         }
 
         .nav-item .label {
@@ -259,11 +265,16 @@
             padding: 24px;
             background-color: var(--color-bg);
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
 
         .content-area .container {
             max-width: 1200px;
             margin: 0 auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         /* MODERNISASI BOOTSTRAP COMPONENTS */
@@ -309,6 +320,49 @@
             padding: 16px;
             font-weight: 600;
             color: var(--color-text-dark);
+        }
+
+        .card-header-accent {
+            border-top: 3px solid var(--color-secondary);
+        }
+
+        /* Shared card component pattern (search-section) */
+        .search-section {
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .search-header {
+            padding: 18px 20px 0;
+        }
+
+        .search-header h4 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 17px;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-header h4 svg {
+            color: var(--color-secondary);
+        }
+
+        .search-body {
+            padding: 16px 20px 20px;
+        }
+
+        .footer-text {
+            margin-top: auto;
+            padding-top: 16px;
+            border-top: 1px solid var(--color-border);
+            text-align: center;
+            color: #999;
+            font-size: 13px;
         }
 
         .card-body {
@@ -527,26 +581,170 @@
             .table td {
                 padding: 8px;
             }
+
+            .search-header {
+                padding: 14px 16px 0;
+            }
+
+            .search-header h4 {
+                font-size: 15px;
+            }
+
+            .search-body {
+                padding: 12px 16px 16px;
+            }
         }
 
         .loading {
             display: none;
         }
+
+        /* Notification Toast */
+        #notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            max-width: 360px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-success {
+            background-color: var(--color-success);
+        }
+
+        .toast-error {
+            background-color: var(--color-danger);
+        }
+
+        .toast-info {
+            background-color: var(--color-primary);
+        }
+
+        /* Custom Confirm Dialog */
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .confirm-overlay.active {
+            opacity: 1;
+        }
+
+        .confirm-box {
+            background: var(--color-bg);
+            border-radius: 14px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            padding: 28px 24px 20px;
+            max-width: 380px;
+            width: 90%;
+            transform: scale(0.95);
+            transition: transform 0.2s;
+        }
+
+        .confirm-overlay.active .confirm-box {
+            transform: scale(1);
+        }
+
+        .confirm-box .icon {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .confirm-box .icon svg {
+            width: 48px;
+            height: 48px;
+            color: var(--color-secondary);
+        }
+
+        .confirm-box .message {
+            text-align: center;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--color-text-dark);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .confirm-box .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .confirm-box .actions button {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .confirm-box .btn-cancel {
+            background: var(--color-surface);
+            color: var(--color-text-dark);
+            border: 1px solid var(--color-border);
+        }
+
+        .confirm-box .btn-cancel:hover {
+            background: #e5e7eb;
+        }
+
+        .confirm-box .btn-confirm {
+            background: var(--color-danger);
+            color: white;
+        }
+
+        .confirm-box .btn-confirm:hover {
+            background: #dc2626;
+        }
     </style>
 </head>
 
 <body>
+    <div id="notification-container"></div>
     @auth
         <!-- TOP BAR -->
         <header class="topbar">
             <div class="topbar-left">
-                <button class="sidebar-toggle" id="sidebar-toggle" type="button">☰</button>
+                <button class="sidebar-toggle" id="sidebar-toggle" type="button">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="21" x2="21" y2="21"/>
+                            </svg>
+                        </button>
                 <a href="{{ route('dashboard') }}" class="topbar-logo">Perpusku</a>
             </div>
             <div class="topbar-right">
                 <div class="profile-dropdown">
                     <button class="profile-button" id="profile-button" type="button">
-                        👤 <span id="user-name-header">User</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> <span id="user-name-header">User</span>
                     </button>
                     <div class="dropdown-menu" id="profile-dropdown">
                         <a href="{{ route('profile.edit') }}">Profile</a>
@@ -566,20 +764,29 @@
             <aside class="sidebar" id="sidebar">
                 <nav class="sidebar-nav">
                     <a href="{{ route('dashboard') }}" class="nav-item" onclick="setActiveNav(this)">
-                        <span class="icon">🏠</span>
+                        <span class="icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        </span>
                         <span class="label">Dashboard</span>
                     </a>
                     <a href="{{ route('books.index') }}" class="nav-item" onclick="setActiveNav(this)">
-                        <span class="icon">📚</span>
+                        <span class="icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17"/></svg>
+                        </span>
                         <span class="label">Cari Buku</span>
                     </a>
                     <a href="{{ route('cart.index') }}" class="nav-item" onclick="setActiveNav(this)">
-                        <span class="icon">📋</span>
+                        <span class="icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+                        </span>
                         <span class="label">Daftar Pinjaman</span>
                     </a>
                 </nav>
                 <div class="sidebar-footer">
-                    <button class="logout-btn" onclick="confirmLogout(event)">Logout</button>
+                    <button class="logout-btn" onclick="confirmLogout(event)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        Logout
+                    </button>
                 </div>
             </aside>
 
@@ -590,6 +797,7 @@
             <main class="content-area">
                 <div class="container">
                     @yield('content')
+                    @yield('footer')
                 </div>
             </main>
         </div>
@@ -599,8 +807,13 @@
         </div>
     @endauth
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        const esc = (str) => {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(str ?? ''));
+            return div.innerHTML;
+        };
+
         const appRoutes = {
             login: "{{ route('login') }}",
             dashboard: "{{ route('dashboard') }}",
@@ -617,11 +830,14 @@
             return url;
         };
 
+        // Token helper: only from localStorage (API users). Session users rely on Sanctum cookie auth.
+        const getToken = () => localStorage.getItem('token');
+
         // Global Fetch Setup
         const apiFetch = async (url, options = {}) => {
             const resolvedUrl = resolveApiUrl(url);
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            const token = localStorage.getItem('token');
+            const token = getToken();
             const headers = {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
@@ -632,9 +848,8 @@
 
             const response = await fetch(resolvedUrl, { ...options, headers });
 
-            if (response.status === 401) {
+            if (response.status === 401 && !options.noRedirect) {
                 localStorage.removeItem('token');
-                window.location.href = appRoutes.login;
             }
 
             return response;
@@ -708,25 +923,96 @@
             // Load user info
             if (document.getElementById('user-name-header')) {
                 apiFetch('/api/user')
-                    .then(res => res.json())
+                    .then(res => {
+                        if (res.status === 401) throw new Error('Unauthenticated');
+                        return res.json();
+                    })
                     .then(data => {
                         if (data.name) {
                             document.getElementById('user-name-header').innerText = data.name;
                         }
                     })
-                    .catch(err => console.log('User fetch error:', err));
+                    .catch(() => {});
             }
         });
+
+        // Custom confirmation dialog (replaces native confirm())
+        function showConfirmDialog(message) {
+            return new Promise(resolve => {
+                const overlay = document.createElement('div');
+                overlay.className = 'confirm-overlay';
+                overlay.innerHTML = `
+                    <div class="confirm-box">
+                        <div class="icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                        </div>
+                        <div class="message">${message}</div>
+                        <div class="actions">
+                            <button class="btn-cancel" id="confirm-cancel">Batal</button>
+                            <button class="btn-confirm" id="confirm-ok">Ya, Saya Yakin</button>
+                        </div>
+                    </div>`;
+
+                document.body.appendChild(overlay);
+                requestAnimationFrame(() => overlay.classList.add('active'));
+
+                const done = (result) => {
+                    document.removeEventListener('keydown', onKeydown);
+                    overlay.classList.remove('active');
+                    setTimeout(() => overlay.remove(), 200);
+                    resolve(result);
+                };
+
+                const onKeydown = (e) => {
+                    if (e.key === 'Escape') done(false);
+                };
+
+                overlay.querySelector('#confirm-ok').onclick = () => done(true);
+                overlay.querySelector('#confirm-cancel').onclick = () => done(false);
+                overlay.onclick = (e) => { if (e.target === overlay) done(false); };
+                document.addEventListener('keydown', onKeydown);
+                overlay.querySelector('#confirm-ok').focus();
+            });
+        }
+
+        // Notification system
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('notification-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+            });
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        const BOOK_SVG = `<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17"/>
+            <line x1="8" y1="7" x2="16" y2="7"/>
+            <line x1="8" y1="11" x2="14" y2="11"/>
+            <circle cx="18" cy="6" r="0.5" fill="currentColor"/>
+        </svg>`;
 
         // Logout with confirmation
         function confirmLogout(event) {
             event.preventDefault();
-            if (confirm('Apakah Anda yakin ingin logout?')) {
-                // Clear local storage first
-                localStorage.removeItem('token');
-                // Submit standard form for session logout
-                document.getElementById('logout-form').submit();
-            }
+            showConfirmDialog('Apakah Anda yakin ingin logout?').then(ok => {
+                if (ok) {
+                    localStorage.removeItem('token');
+                    document.getElementById('logout-form').submit();
+                }
+            });
         }
     </script>
     @yield('scripts')

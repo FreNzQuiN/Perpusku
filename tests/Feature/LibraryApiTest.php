@@ -52,7 +52,7 @@ class LibraryApiTest extends TestCase
         $response = $this->getJson('/api/books?title=Laravel');
 
         $response->assertStatus(200)
-                 ->assertJsonCount(1)
+                 ->assertJsonCount(1, 'data')
                  ->assertJsonFragment(['title' => 'Laravel for Beginners']);
     }
 

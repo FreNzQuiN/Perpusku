@@ -6,7 +6,7 @@
     <div style="display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 60px);">
         <div style="width: 100%; max-width: 450px; padding: 20px;">
             <div class="card">
-                <div class="card-header" style="text-align: center;">
+                <div class="card-header card-header-accent" style="text-align: center;">
                     <h4 style="margin-bottom: 0;">Daftar Akun Baru</h4>
                 </div>
                 <div class="card-body">
@@ -51,7 +51,7 @@
                             <input type="password" name="password_confirmation" class="form-control" required>
                         </div>
                         <button type="submit" class="btn btn-primary w-100"
-                            style="margin-top: 16px; background-color: #10b981;">Daftar</button>
+                            style="margin-top: 16px;">Daftar</button>
                     </form>
                     <div style="margin-top: 20px; text-align: center; font-size: 14px;">
                         Sudah punya akun? <a href="{{ route('login') }}"

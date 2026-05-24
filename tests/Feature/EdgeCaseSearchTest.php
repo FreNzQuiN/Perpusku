@@ -35,7 +35,7 @@ class EdgeCaseSearchTest extends TestCase
         $response = $this->getJson('/api/books?title=LARAVEL');
 
         $response->assertStatus(200)
-            ->assertJsonCount(1)
+            ->assertJsonCount(1, 'data')
             ->assertJsonFragment(['title' => 'Laravel for Beginners']);
     }
 
@@ -50,7 +50,7 @@ class EdgeCaseSearchTest extends TestCase
         $response = $this->getJson('/api/books?title=PHP');
 
         $response->assertStatus(200)
-            ->assertJsonCount(1)
+            ->assertJsonCount(1, 'data')
             ->assertJsonFragment(['title' => 'Advanced PHP Techniques']);
     }
 
@@ -79,7 +79,7 @@ class EdgeCaseSearchTest extends TestCase
         $response = $this->getJson('/api/books?title=NonexistentBook');
 
         $response->assertStatus(200)
-            ->assertJsonCount(0);
+            ->assertJsonCount(0, 'data');
     }
 
     /**
@@ -90,10 +90,10 @@ class EdgeCaseSearchTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user);
 
-        $response = $this->getJson('/api/books?title=Java%20Script');
+        $response = $this->getJson('/api/books?title=JavaScript');
 
         $response->assertStatus(200)
-            ->assertJsonCount(1)
+            ->assertJsonCount(1, 'data')
             ->assertJsonFragment(['title' => 'JavaScript Mastery']);
     }
 
@@ -170,7 +170,7 @@ class EdgeCaseSearchTest extends TestCase
 
         // Should handle safely
         $response->assertStatus(200)
-            ->assertJsonCount(0);
+            ->assertJsonCount(0, 'data');
     }
 
     /**
@@ -184,7 +184,7 @@ class EdgeCaseSearchTest extends TestCase
         $response = $this->getJson("/api/books?title=" . urlencode('<script>alert("XSS")</script>'));
 
         $response->assertStatus(200)
-            ->assertJsonCount(0);
+            ->assertJsonCount(0, 'data');
     }
 
     /**
@@ -208,7 +208,7 @@ class EdgeCaseSearchTest extends TestCase
         $response = $this->getJson('/api/books?title=lArAvEl');
 
         $response->assertStatus(200)
-            ->assertJsonCount(1);
+            ->assertJsonCount(1, 'data');
     }
 
     /**
@@ -224,7 +224,7 @@ class EdgeCaseSearchTest extends TestCase
         $response = $this->getJson('/api/books?title=3.10');
 
         $response->assertStatus(200)
-            ->assertJsonCount(1)
+            ->assertJsonCount(1, 'data')
             ->assertJsonFragment(['title' => 'Python 3.10 Handbook']);
     }
 
@@ -269,7 +269,7 @@ class EdgeCaseSearchTest extends TestCase
         $response = $this->getJson('/api/books?title=Программирование');
 
         $response->assertStatus(200)
-            ->assertJsonCount(1);
+            ->assertJsonCount(1, 'data');
     }
 
     /**

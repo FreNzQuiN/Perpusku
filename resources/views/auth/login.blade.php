@@ -6,7 +6,7 @@
     <div style="display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 60px);">
         <div style="width: 100%; max-width: 400px; padding: 20px;">
             <div class="card">
-                <div class="card-header" style="text-align: center;">
+                <div class="card-header card-header-accent" style="text-align: center;">
                     <h4 style="margin-bottom: 0;">Login Perpusku</h4>
                 </div>
                 <div class="card-body">

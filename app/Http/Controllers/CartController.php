@@ -2,46 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreCartRequest;
+use App\Http\Resources\CartResource;
 use App\Models\Cart;
-use App\Models\Book;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class CartController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $cartItems = Cart::where('user_id', $request->user()->id)->with('book')->get();
+        $cartItems = Cart::where('user_id', $request->user()->id)
+            ->with('book')
+            ->get();
+
         return response()->json([
             'success' => true,
-            'data' => $cartItems
+            'data' => CartResource::collection($cartItems)
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreCartRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'book_id' => 'required|exists:books,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        // Check stock
-        $book = Book::find($request->book_id);
-        if ($book->stock <= 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Buku tidak dapat ditambahkan',
-                'errors' => ['book_id' => ['Maaf, stok buku ini sedang kosong dan tidak bisa dimasukkan ke keranjang.']]
-            ], 422);
-        }
-
         $cart = Cart::updateOrCreate(
             ['user_id' => $request->user()->id, 'book_id' => $request->book_id]
         );
@@ -49,20 +31,13 @@ class CartController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Added to cart',
-            'data' => $cart->load('book')
+            'data' => new CartResource($cart->load('book'))
         ], 201);
     }
 
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, $cartId): JsonResponse
     {
-        $cart = Cart::where('user_id', $request->user()->id)->where('id', $id)->first();
-
-        if (!$cart) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Item not found in cart'
-            ], 404);
-        }
+        $cart = Cart::where('user_id', $request->user()->id)->findOrFail($cartId);
 
         $cart->delete();
 

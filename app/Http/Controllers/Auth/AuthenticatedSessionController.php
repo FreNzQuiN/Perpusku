@@ -4,30 +4,35 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-
-use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 
 class AuthenticatedSessionController extends Controller
 {
-    /**
-     * Handle an incoming authentication request.
-     */
-    public function store(LoginRequest $request)
+    public function store(LoginRequest $request): JsonResponse|RedirectResponse|Response
     {
-        // This handles validation and rate limiting via Breeze's LoginRequest
-        $request->authenticate();
+        try {
+            $request->authenticate();
+        } catch (ValidationException $e) {
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('auth.failed'),
+                ], 401);
+            }
+            throw $e;
+        }
 
-        // Regenerate session to prevent session fixation and establish new CSRF token
         if ($request->hasSession()) {
             $request->session()->regenerate();
         }
 
         $user = Auth::user();
 
-        // For API/AJAX requests, return standardized JSON with token
         if ($request->wantsJson() || $request->is('api/*')) {
             $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -39,20 +44,17 @@ class AuthenticatedSessionController extends Controller
             ], 200);
         }
 
-        // Fallback for standard web form submit
         return redirect()->intended(route('dashboard'));
     }
 
-    /**
-     * Destroy an authenticated session.
-     */
-    public function destroy(Request $request): \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+    public function destroy(Request $request): JsonResponse|Response|RedirectResponse
     {
         $user = Auth::user();
 
-        // Revoke token if it exists
-        if ($user && method_exists($user, 'currentAccessToken') && $user->currentAccessToken()) {
-            $user->currentAccessToken()->delete();
+        if ($request->wantsJson() || $request->is('api/*')) {
+            if ($user && method_exists($user, 'currentAccessToken') && $user->currentAccessToken()) {
+                $user->currentAccessToken()->delete();
+            }
         }
 
         Auth::guard('web')->logout();
@@ -69,6 +71,6 @@ class AuthenticatedSessionController extends Controller
             ], 200);
         }
 
-        return redirect('/');
+        return redirect()->route('login');
     }
 }
