@@ -26,7 +26,7 @@ class BorrowingService
 
             $borrowing = Borrowing::create([
                 'user_id' => $userId,
-                'borrow_date' => $data['borrow_date'],
+                'borrow_date' => now()->toDateString(),
                 'duration_days' => $data['duration_days'],
             ]);
 

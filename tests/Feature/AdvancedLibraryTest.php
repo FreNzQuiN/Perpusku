@@ -34,20 +34,24 @@ class AdvancedLibraryTest extends TestCase
         $this->assertDatabaseMissing('carts', ['id' => $cartId]);
     }
 
-    public function test_cannot_borrow_past_date()
+    public function test_user_can_borrow_without_borrow_date_uses_today()
     {
         $user = User::factory()->create();
         $book = Book::create(['title' => 'Book', 'author' => 'Author', 'stock' => 5]);
         $this->actingAs($user);
 
         $response = $this->postJson('/api/borrowings', [
-            'borrow_date' => now()->subDay()->toDateString(),
             'duration_days' => 2,
             'book_ids' => [$book->id],
         ]);
 
-        $response->assertStatus(422)
-                 ->assertJsonValidationErrors(['borrow_date']);
+        $response->assertStatus(201)
+            ->assertJson(['success' => true]);
+
+        $this->assertDatabaseHas('borrowings', [
+            'user_id' => $user->id,
+            'borrow_date' => now()->toDateString(),
+        ]);
     }
 
     public function test_cannot_borrow_duplicate_books_in_one_transaction()
@@ -57,13 +61,12 @@ class AdvancedLibraryTest extends TestCase
         $this->actingAs($user);
 
         $response = $this->postJson('/api/borrowings', [
-            'borrow_date' => now()->toDateString(),
             'duration_days' => 2,
             'book_ids' => [$book->id, $book->id],
         ]);
 
         $response->assertStatus(422)
-                 ->assertJsonValidationErrors(['book_ids.0', 'book_ids.1']);
+            ->assertJsonValidationErrors(['book_ids.0', 'book_ids.1']);
     }
 
     public function test_user_can_see_borrowing_history()
@@ -80,8 +83,8 @@ class AdvancedLibraryTest extends TestCase
 
         $response = $this->getJson('/api/my-borrowings');
         $response->assertStatus(200)
-                 ->assertJsonCount(1, 'data')
-                 ->assertJsonFragment(['title' => 'History Book']);
+            ->assertJsonCount(1, 'data')
+            ->assertJsonFragment(['title' => 'History Book']);
     }
 
     public function test_global_error_handler_for_404()
@@ -91,6 +94,6 @@ class AdvancedLibraryTest extends TestCase
 
         $response = $this->getJson('/api/non-existent-route');
         $response->assertStatus(404)
-                 ->assertJson(['success' => false, 'message' => 'Resource not found']);
+            ->assertJson(['success' => false, 'message' => 'Resource not found']);
     }
 }

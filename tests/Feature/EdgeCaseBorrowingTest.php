@@ -100,23 +100,25 @@ class EdgeCaseBorrowingTest extends TestCase
     }
 
     /**
-     * Test: Borrow past date
-     * From AdvancedLibraryTest.php
+     * Test: Borrowing uses today's date even if client sends a different one
      */
-    public function test_borrow_past_date()
+    public function test_borrow_uses_today_date()
     {
         $book = Book::find(1);
         $user = User::factory()->create();
         $this->actingAs($user);
 
         $response = $this->postJson('/api/borrowings', [
-            'borrow_date' => now()->subDay()->toDateString(),
             'duration_days' => 2,
             'book_ids' => [$book->id],
         ]);
 
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['borrow_date']);
+        $response->assertStatus(201);
+
+        $this->assertDatabaseHas('borrowings', [
+            'user_id' => $user->id,
+            'borrow_date' => now()->toDateString(),
+        ]);
     }
 
     /**
@@ -327,9 +329,9 @@ class EdgeCaseBorrowingTest extends TestCase
     }
 
     /**
-     * Test: Missing borrow_date field
+     * Test: Borrow can omit borrow_date
      */
-    public function test_borrow_missing_borrow_date()
+    public function test_borrow_can_omit_borrow_date()
     {
         $user = User::factory()->create();
         $this->actingAs($user);
@@ -339,14 +341,13 @@ class EdgeCaseBorrowingTest extends TestCase
             'book_ids' => [1],
         ]);
 
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['borrow_date']);
+        $response->assertStatus(201);
     }
 
     /**
-     * Test: Invalid date format
+     * Test: Invalid borrow_date input is ignored
      */
-    public function test_borrow_invalid_date_format()
+    public function test_borrow_ignores_invalid_borrow_date_input()
     {
         $user = User::factory()->create();
         $this->actingAs($user);
@@ -357,8 +358,8 @@ class EdgeCaseBorrowingTest extends TestCase
             'book_ids' => [1],
         ]);
 
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['borrow_date']);
+        $response->assertStatus(201)
+            ->assertJson(['success' => true]);
     }
 
     /**
@@ -470,9 +471,9 @@ class EdgeCaseBorrowingTest extends TestCase
     }
 
     /**
-     * Test: Future date for borrow_date
+     * Test: Future borrow_date input is ignored
      */
-    public function test_borrow_future_date()
+    public function test_borrow_ignores_future_borrow_date_input()
     {
         $user = User::factory()->create();
         $this->actingAs($user);
@@ -483,7 +484,7 @@ class EdgeCaseBorrowingTest extends TestCase
             'book_ids' => [1],
         ]);
 
-        // Future date might be allowed or rejected depending on business logic
-        $this->assertTrue(in_array($response->status(), [201, 422]));
+        $response->assertStatus(201)
+            ->assertJson(['success' => true]);
     }
 }

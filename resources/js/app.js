@@ -468,10 +468,8 @@ const openConfirmModal = async () => {
     const container = document.getElementById('summary-container');
     const submitBtn = document.getElementById('submit-btn');
     const errorDuration = document.getElementById('error-duration');
-    const errorDate = document.getElementById('error-date');
 
     errorDuration.innerHTML = '';
-    errorDate.innerHTML = '';
     submitBtn.disabled = false;
     submitBtn.innerText = 'Konfirmasi Pinjam';
 
@@ -548,7 +546,6 @@ if (document.getElementById('confirm-form')) {
             const response = await apiFetch('/api/borrowings', {
                 method: 'POST',
                 body: JSON.stringify({
-                    borrow_date: document.getElementById('borrow_date').value,
                     duration_days: document.getElementById('duration').value,
                     book_ids: bookIds
                 })
@@ -568,7 +565,6 @@ if (document.getElementById('confirm-form')) {
                 btn.innerText = 'Konfirmasi Pinjam';
                 if (data.errors) {
                     if (data.errors.duration_days) document.getElementById('error-duration').innerText = data.errors.duration_days[0];
-                    if (data.errors.borrow_date) document.getElementById('error-date').innerText = data.errors.borrow_date[0];
                     if (data.errors.book_ids) showNotification(data.errors.book_ids[0], 'error');
                 } else {
                     showNotification(data.message || 'Gagal melakukan peminjaman', 'error');

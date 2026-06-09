@@ -14,7 +14,6 @@ class StoreBorrowingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'borrow_date' => 'required|date|after_or_equal:today',
             'duration_days' => 'required|integer|min:1|max:3',
             'book_ids' => 'required|array|min:1|max:10',
             'book_ids.*' => 'exists:books,id|distinct',
@@ -24,9 +23,6 @@ class StoreBorrowingRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'borrow_date.required' => 'Tanggal pinjam harus diisi.',
-            'borrow_date.date' => 'Format tanggal pinjam tidak valid.',
-            'borrow_date.after_or_equal' => 'Tanggal pinjam tidak boleh di masa lalu.',
             'duration_days.required' => 'Lama peminjaman harus diisi.',
             'duration_days.integer' => 'Lama peminjaman harus berupa angka.',
             'duration_days.min' => 'Lama peminjaman minimal 1 hari.',

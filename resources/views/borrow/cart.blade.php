@@ -60,11 +60,6 @@
                         <div id="error-duration" class="error-message"></div>
                         <small style="color: #9ca3af; font-size: 12px;">Maksimal 3 hari</small>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Tanggal Pinjam</label>
-                        <input type="date" id="borrow_date" class="form-control" value="{{ date('Y-m-d') }}">
-                        <div id="error-date" class="error-message"></div>
-                    </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeConfirmModal()">Batal</button>
                         <button type="submit" id="submit-btn" class="btn btn-primary">Konfirmasi Pinjam</button>
