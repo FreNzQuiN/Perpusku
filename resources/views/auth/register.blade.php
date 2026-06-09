@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Register')
+@section('title', 'Daftar')
 
 @section('content')
     <div style="display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 60px);">

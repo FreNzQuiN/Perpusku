@@ -203,83 +203,98 @@ if (document.getElementById('results-container')) {
         const results = document.getElementById('results-container');
         showSkeleton();
 
-        const response = await apiFetch(`/api/books?title=${encodeURIComponent(title)}`);
-        if (response.status === 401) return;
-        const result = await response.json();
-        const books = result.data || result;
+        try {
+            const response = await apiFetch(`/api/books?title=${encodeURIComponent(title)}`);
+            if (response.status === 401) return;
+            const result = await response.json();
+            const books = result.data || result;
 
-        if (books.length > 0) {
-            results.innerHTML = books.map(book => {
-                let actionHtml = '';
+            if (books.length > 0) {
+                results.innerHTML = books.map(book => {
+                    let actionHtml = '';
 
-                if (book.in_borrowing) {
-                    const returnDate = new Date(book.borrowing.return_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
-                    const borrowDate = new Date(book.borrowing.borrow_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
-                    actionHtml = `
-                        <div class="borrowing-info">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                            </svg>
-                            <span>Dipinjam <strong>${esc(borrowDate)}</strong> s.d. <strong>${esc(returnDate)}</strong></span>
-                        </div>
-                        <button class="btn-add secondary-disabled" disabled>Sedang Dipinjam</button>`;
-                } else if (book.in_cart) {
-                    actionHtml = `
-                        <button onclick="removeFromCartSearch(${book.id}, ${book.cart_id})" class="btn-add danger-soft">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                            </svg>
-                            Hapus dari Keranjang
-                        </button>`;
-                } else {
-                    const disabled = book.stock <= 0;
-                    actionHtml = `
-                        <button onclick="addToCart(${book.id})" class="btn-add primary" ${disabled ? 'disabled' : ''}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                            </svg>
-                            ${disabled ? 'Stok Habis' : 'Tambah Pinjaman'}
-                        </button>`;
-                }
+                    if (book.in_borrowing) {
+                        const returnDate = new Date(book.borrowing.return_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
+                        const borrowDate = new Date(book.borrowing.borrow_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
+                        actionHtml = `
+                            <div class="borrowing-info">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                                </svg>
+                                <span>Dipinjam <strong>${esc(borrowDate)}</strong> s.d. <strong>${esc(returnDate)}</strong></span>
+                            </div>
+                            <button class="btn-add secondary-disabled" disabled>Sedang Dipinjam</button>`;
+                    } else if (book.in_cart) {
+                        actionHtml = `
+                            <button onclick="removeFromCartSearch(${book.id}, ${book.cart_id})" class="btn-add danger-soft">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                </svg>
+                                Hapus dari Keranjang
+                            </button>`;
+                    } else {
+                        const disabled = book.stock <= 0;
+                        actionHtml = `
+                            <button onclick="addToCart(${book.id})" class="btn-add primary" ${disabled ? 'disabled' : ''}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                ${disabled ? 'Stok Habis' : 'Tambah Pinjaman'}
+                            </button>`;
+                    }
 
-                const stockClass = book.stock > 0 ? 'available' : 'unavailable';
+                    const stockClass = book.stock > 0 ? 'available' : 'unavailable';
 
-                return `<div class="book-card">
-                        <div class="book-cover">
-                            ${BOOK_SVG}
-                            <span class="stock-badge ${stockClass}">Stok ${esc(book.stock)}</span>
-                        </div>
-                        <div class="book-card-body">
-                            <div class="book-title">${esc(book.title)}</div>
-                            <div class="book-author">${esc(book.author)}</div>
-                            <div class="book-actions">${actionHtml}</div>
-                        </div>
+                    return `<div class="book-card">
+                            <div class="book-cover">
+                                ${BOOK_SVG}
+                                <span class="stock-badge ${stockClass}">Stok ${esc(book.stock)}</span>
+                            </div>
+                            <div class="book-card-body">
+                                <div class="book-title">${esc(book.title)}</div>
+                                <div class="book-author">${esc(book.author)}</div>
+                                <div class="book-actions">${actionHtml}</div>
+                            </div>
+                        </div>`;
+                }).join('');
+            } else {
+                results.innerHTML = `
+                    <div class="empty-state">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17"/>
+                        </svg>
+                        <h5>${title ? 'Buku tidak ditemukan' : 'Belum ada pencarian'}</h5>
+                        <p>${title ? 'Coba gunakan kata kunci lain untuk mencari buku.' : 'Silakan masukkan judul buku yang ingin dicari.'}</p>
                     </div>`;
-            }).join('');
-        } else {
+            }
+        } catch (err) {
             results.innerHTML = `
                 <div class="empty-state">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17"/>
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                     </svg>
-                    <h5>${title ? 'Buku tidak ditemukan' : 'Belum ada pencarian'}</h5>
-                    <p>${title ? 'Coba gunakan kata kunci lain untuk mencari buku.' : 'Silakan masukkan judul buku yang ingin dicari.'}</p>
+                    <h5>Gagal memuat data buku</h5>
+                    <p>Periksa koneksi jaringan dan server, lalu coba lagi.</p>
                 </div>`;
         }
     };
 
     const addToCart = async (bookId) => {
-        const response = await apiFetch('/api/cart', {
-            method: 'POST',
-            body: JSON.stringify({ book_id: bookId })
-        });
-        const data = await response.json();
-        if (data.success) {
-            showNotification('✓ Buku berhasil ditambahkan ke daftar pinjaman!');
-            searchBooks(document.getElementById('search-input').value);
-        } else {
-            showNotification(data.message || '✗ Gagal menambahkan buku', 'error');
+        try {
+            const response = await apiFetch('/api/cart', {
+                method: 'POST',
+                body: JSON.stringify({ book_id: bookId })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showNotification('✓ Buku berhasil ditambahkan ke daftar pinjaman!');
+                searchBooks(document.getElementById('search-input').value);
+            } else {
+                showNotification(data.message || '✗ Gagal menambahkan buku', 'error');
+            }
+        } catch (err) {
+            showNotification('✗ Gagal terhubung ke server', 'error');
         }
     };
     window.addToCart = addToCart;
@@ -287,13 +302,17 @@ if (document.getElementById('results-container')) {
     const removeFromCartSearch = async (bookId, cartId) => {
         const ok = await showConfirmDialog('Hapus buku ini dari keranjang?');
         if (!ok) return;
-        const response = await apiFetch(`/api/cart/${cartId}`, { method: 'DELETE' });
-        const data = await response.json();
-        if (data.success) {
-            showNotification('✓ Buku berhasil dihapus dari keranjang');
-            searchBooks(document.getElementById('search-input').value);
-        } else {
-            showNotification(data.message || '✗ Gagal menghapus buku', 'error');
+        try {
+            const response = await apiFetch(`/api/cart/${cartId}`, { method: 'DELETE' });
+            const data = await response.json();
+            if (data.success) {
+                showNotification('✓ Buku berhasil dihapus dari keranjang');
+                searchBooks(document.getElementById('search-input').value);
+            } else {
+                showNotification(data.message || '✗ Gagal menghapus buku', 'error');
+            }
+        } catch (err) {
+            showNotification('✗ Gagal terhubung ke server', 'error');
         }
     };
     window.removeFromCartSearch = removeFromCartSearch;
@@ -313,46 +332,54 @@ if (document.getElementById('results-container')) {
 
 if (document.getElementById('history-container')) {
     const loadHistory = async () => {
-        const response = await apiFetch('/api/my-borrowings');
-        if (response.status === 401) return;
-        const data = await response.json();
         const container = document.getElementById('history-container');
+        try {
+            const response = await apiFetch('/api/my-borrowings');
+            if (response.status === 401) return;
+            const data = await response.json();
 
-        if (data.success && data.data.length > 0) {
-            let html = '<div class="history-list">';
-            data.data.forEach(item => {
-                const books = item.details.map(d =>
-                    `<span>${esc(d.book.title)}</span>`
-                ).join(' ');
-                const borrowDate = new Date(item.borrow_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
-                html += `
-                    <div class="history-item">
-                        <div class="history-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                            </svg>
-                        </div>
-                        <div class="history-info">
-                            <div class="h-date">${esc(borrowDate)}</div>
-                            <div class="h-books">${books}</div>
-                        </div>
-                        <div class="history-dur">${esc(item.duration_days)} Hari</div>
+            if (data.success && data.data.length > 0) {
+                let html = '<div class="history-list">';
+                data.data.forEach(item => {
+                    const books = item.details.map(d =>
+                        `<span>${esc(d.book.title)}</span>`
+                    ).join(' ');
+                    const borrowDate = new Date(item.borrow_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
+                    html += `
+                        <div class="history-item">
+                            <div class="history-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                                </svg>
+                            </div>
+                            <div class="history-info">
+                                <div class="h-date">${esc(borrowDate)}</div>
+                                <div class="h-books">${books}</div>
+                            </div>
+                            <div class="history-dur">${esc(item.duration_days)} Hari</div>
+                        </div>`;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } else {
+                const searchUrl = document.querySelector('meta[name="books-index-url"]')?.getAttribute('content') || '/search-books';
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px;">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 12px;">
+                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/>
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17"/>
+                        </svg>
+                        <h5 style="font-size: 15px; font-weight: 600; color: #374151; margin: 0 0 4px;">Belum ada riwayat</h5>
+                        <p style="font-size: 13px; color: #9ca3af; margin: 0;">
+                            <a href="${searchUrl}" style="color: var(--color-primary); text-decoration: none; font-weight: 500;">Mulai cari buku</a> untuk meminjam
+                        </p>
                     </div>`;
-            });
-            html += '</div>';
-            container.innerHTML = html;
-        } else {
-            const searchUrl = document.querySelector('meta[name="books-index-url"]')?.getAttribute('content') || '/search-books';
+            }
+        } catch (err) {
             container.innerHTML = `
-                <div style="text-align: center; padding: 40px 20px;">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 12px;">
-                        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/>
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17"/>
-                    </svg>
-                    <h5 style="font-size: 15px; font-weight: 600; color: #374151; margin: 0 0 4px;">Belum ada riwayat</h5>
-                    <p style="font-size: 13px; color: #9ca3af; margin: 0;">
-                        <a href="${searchUrl}" style="color: var(--color-primary); text-decoration: none; font-weight: 500;">Mulai cari buku</a> untuk meminjam
-                    </p>
+                <div style="text-align: center; padding: 40px 20px; color: #ef4444;">
+                    <p style="font-size: 14px; font-weight: 500;">Gagal memuat riwayat peminjaman</p>
+                    <p style="font-size: 12px; color: #9ca3af; margin-top: 4px;">Periksa koneksi jaringan dan server, lalu muat ulang halaman.</p>
                 </div>`;
         }
     };
@@ -362,43 +389,52 @@ if (document.getElementById('history-container')) {
 
 if (document.getElementById('cart-container')) {
     const loadCart = async () => {
-        const response = await apiFetch('/api/cart');
-        if (response.status === 401) return;
-        const data = await response.json();
         const container = document.getElementById('cart-container');
         const actions = document.getElementById('action-container');
+        try {
+            const response = await apiFetch('/api/cart');
+            if (response.status === 401) return;
+            const data = await response.json();
 
-        if (data.success && data.data.length > 0) {
-            let html = '<div class="cart-list">';
-            data.data.forEach(item => {
-                html += `
-                    <div class="cart-item">
-                        <div class="cart-cover">${BOOK_SVG}</div>
-                        <div class="cart-info">
-                            <div class="c-title">${esc(item.book.title)}</div>
-                            <div class="c-author">${esc(item.book.author)}</div>
-                        </div>
-                        <button onclick="removeFromCart(${item.id})" class="btn-remove">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                            </svg>
-                            Hapus
-                        </button>
+            if (data.success && data.data.length > 0) {
+                let html = '<div class="cart-list">';
+                data.data.forEach(item => {
+                    html += `
+                        <div class="cart-item">
+                            <div class="cart-cover">${BOOK_SVG}</div>
+                            <div class="cart-info">
+                                <div class="c-title">${esc(item.book.title)}</div>
+                                <div class="c-author">${esc(item.book.author)}</div>
+                            </div>
+                            <button onclick="removeFromCart(${item.id})" class="btn-remove">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                </svg>
+                                Hapus
+                            </button>
+                        </div>`;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+                actions.style.display = 'flex';
+            } else {
+                const searchUrl = document.querySelector('meta[name="books-index-url"]')?.getAttribute('content') || '/search-books';
+                container.innerHTML = `
+                    <div class="empty-cart">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+                            <rect x="9" y="3" width="6" height="4" rx="1"/>
+                        </svg>
+                        <h5>Daftar pinjaman masih kosong</h5>
+                        <p><a href="${searchUrl}" style="color: var(--color-primary); text-decoration: none; font-weight: 500;">Cari buku</a> untuk menambah pinjaman</p>
                     </div>`;
-            });
-            html += '</div>';
-            container.innerHTML = html;
-            actions.style.display = 'flex';
-        } else {
-            const searchUrl = document.querySelector('meta[name="books-index-url"]')?.getAttribute('content') || '/search-books';
+                actions.style.display = 'none';
+            }
+        } catch (err) {
             container.innerHTML = `
-                <div class="empty-cart">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
-                        <rect x="9" y="3" width="6" height="4" rx="1"/>
-                    </svg>
-                    <h5>Daftar pinjaman masih kosong</h5>
-                    <p><a href="${searchUrl}" style="color: var(--color-primary); text-decoration: none; font-weight: 500;">Cari buku</a> untuk menambah pinjaman</p>
+                <div style="text-align: center; padding: 40px 20px; color: #ef4444;">
+                    <p style="font-size: 14px; font-weight: 500;">Gagal memuat keranjang</p>
+                    <p style="font-size: 12px; color: #9ca3af; margin-top: 4px;">Periksa koneksi jaringan dan server, lalu muat ulang halaman.</p>
                 </div>`;
             actions.style.display = 'none';
         }
@@ -407,13 +443,17 @@ if (document.getElementById('cart-container')) {
     const removeFromCart = async (id) => {
         const ok = await showConfirmDialog('Hapus buku ini dari daftar pinjaman?');
         if (!ok) return;
-        const response = await apiFetch(`/api/cart/${id}`, { method: 'DELETE' });
-        const data = await response.json();
-        if (data.success) {
-            showNotification('✓ Buku berhasil dihapus dari daftar');
-            loadCart();
-        } else {
-            showNotification(data.message || '✗ Gagal menghapus buku', 'error');
+        try {
+            const response = await apiFetch(`/api/cart/${id}`, { method: 'DELETE' });
+            const data = await response.json();
+            if (data.success) {
+                showNotification('✓ Buku berhasil dihapus dari daftar');
+                loadCart();
+            } else {
+                showNotification(data.message || '✗ Gagal menghapus buku', 'error');
+            }
+        } catch (err) {
+            showNotification('✗ Gagal terhubung ke server', 'error');
         }
     };
     window.removeFromCart = removeFromCart;
@@ -421,14 +461,28 @@ if (document.getElementById('cart-container')) {
     loadCart();
 }
 
-if (document.getElementById('summary-container')) {
-    let bookIds = [];
+let bookIds = [];
 
-    const loadSummary = async () => {
+const openConfirmModal = async () => {
+    const modal = document.getElementById('confirm-modal');
+    const container = document.getElementById('summary-container');
+    const submitBtn = document.getElementById('submit-btn');
+    const errorDuration = document.getElementById('error-duration');
+    const errorDate = document.getElementById('error-date');
+
+    errorDuration.innerHTML = '';
+    errorDate.innerHTML = '';
+    submitBtn.disabled = false;
+    submitBtn.innerText = 'Konfirmasi Pinjam';
+
+    container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 20px;">Memuat...</div>';
+
+    modal.classList.add('active');
+
+    try {
         const response = await apiFetch('/api/cart');
         if (response.status === 401) return;
         const data = await response.json();
-        const container = document.getElementById('summary-container');
 
         if (data.success && data.data.length > 0) {
             bookIds = data.data.map(item => item.book_id);
@@ -453,46 +507,77 @@ if (document.getElementById('summary-container')) {
                 document.getElementById('submit-btn').disabled = true;
             }
         } else {
-            const cartUrl = document.querySelector('meta[name="cart-index-url"]')?.getAttribute('content') || '/manage-cart';
-            window.location.href = cartUrl;
+            closeConfirmModal();
+            showNotification('Keranjang pinjaman kosong', 'error');
         }
-    };
+    } catch (err) {
+        closeConfirmModal();
+        showNotification('Gagal memuat data keranjang. Periksa koneksi server.', 'error');
+    }
+};
+window.openConfirmModal = openConfirmModal;
 
+const closeConfirmModal = () => {
+    const modal = document.getElementById('confirm-modal');
+    if (modal) modal.classList.remove('active');
+};
+window.closeConfirmModal = closeConfirmModal;
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeConfirmModal();
+    }
+});
+
+if (document.getElementById('confirm-modal')) {
+    document.getElementById('confirm-modal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+            closeConfirmModal();
+        }
+    });
+}
+
+if (document.getElementById('confirm-form')) {
     document.getElementById('confirm-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('submit-btn');
         btn.disabled = true;
         btn.innerText = 'Memproses...';
 
-        const response = await apiFetch('/api/borrowings', {
-            method: 'POST',
-            body: JSON.stringify({
-                borrow_date: document.getElementById('borrow_date').value,
-                duration_days: document.getElementById('duration').value,
-                book_ids: bookIds
-            })
-        });
+        try {
+            const response = await apiFetch('/api/borrowings', {
+                method: 'POST',
+                body: JSON.stringify({
+                    borrow_date: document.getElementById('borrow_date').value,
+                    duration_days: document.getElementById('duration').value,
+                    book_ids: bookIds
+                })
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        if (response.ok) {
-            showNotification('✓ Peminjaman Berhasil!');
-            setTimeout(() => {
-                const dashboardUrl = document.querySelector('meta[name="app-dashboard-url"]')?.getAttribute('content') || '/dashboard';
-                window.location.href = dashboardUrl;
-            }, 1000);
-        } else {
+            if (response.ok) {
+                closeConfirmModal();
+                showNotification('✓ Peminjaman Berhasil!');
+                setTimeout(() => {
+                    const dashboardUrl = document.querySelector('meta[name="app-dashboard-url"]')?.getAttribute('content') || '/dashboard';
+                    window.location.href = dashboardUrl;
+                }, 1000);
+            } else {
+                btn.disabled = false;
+                btn.innerText = 'Konfirmasi Pinjam';
+                if (data.errors) {
+                    if (data.errors.duration_days) document.getElementById('error-duration').innerText = data.errors.duration_days[0];
+                    if (data.errors.borrow_date) document.getElementById('error-date').innerText = data.errors.borrow_date[0];
+                    if (data.errors.book_ids) showNotification(data.errors.book_ids[0], 'error');
+                } else {
+                    showNotification(data.message || 'Gagal melakukan peminjaman', 'error');
+                }
+            }
+        } catch (err) {
             btn.disabled = false;
             btn.innerText = 'Konfirmasi Pinjam';
-            if (data.errors) {
-                if (data.errors.duration_days) document.getElementById('error-duration').innerText = data.errors.duration_days[0];
-                if (data.errors.borrow_date) document.getElementById('error-date').innerText = data.errors.borrow_date[0];
-                if (data.errors.book_ids) showNotification(data.errors.book_ids[0], 'error');
-            } else {
-                showNotification(data.message || 'Gagal melakukan peminjaman', 'error');
-            }
+            showNotification('Gagal terhubung ke server. Periksa koneksi jaringan.', 'error');
         }
     });
-
-    loadSummary();
 }

@@ -19,7 +19,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [WebController::class, 'dashboard'])->name('dashboard');
     Route::get('/search-books', [WebController::class, 'search'])->name('books.index');
     Route::get('/manage-cart', [WebController::class, 'cart'])->name('cart.index');
-    Route::get('/confirm-borrow', [WebController::class, 'confirm'])->name('borrow.confirm');
 
     // Profile Routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

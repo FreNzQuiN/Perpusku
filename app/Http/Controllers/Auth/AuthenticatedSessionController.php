@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class AuthenticatedSessionController extends Controller
@@ -49,28 +50,39 @@ class AuthenticatedSessionController extends Controller
 
     public function destroy(Request $request): JsonResponse|Response|RedirectResponse
     {
-        $user = Auth::user();
+        try {
+            $user = Auth::user();
 
-        if ($request->wantsJson() || $request->is('api/*')) {
-            if ($user && method_exists($user, 'currentAccessToken') && $user->currentAccessToken()) {
-                $user->currentAccessToken()->delete();
+            if ($request->wantsJson() || $request->is('api/*')) {
+                if ($user && method_exists($user, 'currentAccessToken') && $user->currentAccessToken()) {
+                    $user->currentAccessToken()->delete();
+                }
             }
+
+            Auth::guard('web')->logout();
+
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Berhasil logout'
+                ], 200);
+            }
+
+            return redirect()->route('login');
+        } catch (\Exception $e) {
+            Log::error('Gagal logout: ' . $e->getMessage());
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal logout'
+                ], 500);
+            }
+            return redirect()->route('login');
         }
-
-        Auth::guard('web')->logout();
-
-        if ($request->hasSession()) {
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-        }
-
-        if ($request->wantsJson() || $request->is('api/*')) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Berhasil logout'
-            ], 200);
-        }
-
-        return redirect()->route('login');
     }
 }

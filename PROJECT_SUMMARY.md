@@ -19,9 +19,8 @@ Library management system (Sistem Perpustakaan). Monolithic Laravel 12 app with 
 | Component | Version |
 |-----------|---------|
 | Build Tool | Vite ^6.0 (dev-only) |
-| Tailwind CSS | ^4.0 (via Vite, unused in Blade) |
-| React/MUI/Zustand/etc | devDependencies only (not used in UI) |
-| Bootstrap 5 | npm + Vite (actual UI framework) |
+| Bootstrap 5 | ^5.3.8 (npm, actual UI framework) |
+| laravel-vite-plugin | ^1.2.0 |
 
 ### Dev/Testing
 | Tool | Version |
@@ -87,7 +86,9 @@ database/
 │   ├── 2026_05_13_092327_create_borrowing_details_table.php
 │   ├── 2026_05_13_093327_create_carts_table.php
 │   ├── 2026_05_24_000001_add_index_to_books_title.php
-│   └── 2026_05_24_000002_add_soft_deletes_to_borrowings_tables.php
+│   ├── 2026_05_24_000002_add_soft_deletes_to_borrowings_tables.php
+│   ├── 2026_05_24_000003_replace_title_index_with_fulltext.php
+│   └── 2026_05_24_000004_add_unique_constraint_to_borrowing_details.php
 ├── factories/
 │   ├── BookFactory.php
 │   └── UserFactory.php
@@ -136,52 +137,60 @@ tests/
 
 ## Database Schema (5 tables)
 
-### `users`
-| Column | Type | Notes |
-|--------|------|-------|
-| id | bigint PK | auto-increment |
-| name | string | |
-| email | string | unique, stored lowercase |
-| password | string | bcrypt |
-| remember_token | string? | nullable |
-| email_verified_at | timestamp? | nullable |
+CREATE TABLE users (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    email_verified_at TIMESTAMP NULL,
+    password VARCHAR(255) NOT NULL,
+    remember_token VARCHAR(100) NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL
+);
 
-### `books`
-| Column | Type | Notes |
-|--------|------|-------|
-| id | bigint PK | |
-| title | string | indexed (non-unique) |
-| author | string | |
-| stock | integer | default 0 |
+CREATE TABLE books (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(255) NOT NULL,
+    author VARCHAR(255) NOT NULL,
+    stock INT DEFAULT 0,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    FULLTEXT fulltext_title (title)
+);
 
-### `borrowings`
-| Column | Type | Notes |
-|--------|------|-------|
-| id | bigint PK | |
-| user_id | FK→users | cascade delete |
-| borrow_date | date | |
-| duration_days | integer | min:1, max:3 |
-| deleted_at | timestamp? | soft deletes |
-| created_at | timestamp | |
-| updated_at | timestamp | |
+CREATE TABLE borrowings (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT UNSIGNED NOT NULL,
+    borrow_date DATE NOT NULL,
+    duration_days INT NOT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    deleted_at TIMESTAMP NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
 
-### `borrowing_details`
-| Column | Type | Notes |
-|--------|------|-------|
-| id | bigint PK | |
-| borrowing_id | FK→borrowings | cascade delete |
-| book_id | FK→books | cascade delete |
-| deleted_at | timestamp? | soft deletes |
-| created_at | timestamp | |
-| updated_at | timestamp | |
+CREATE TABLE borrowing_details (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    borrowing_id BIGINT UNSIGNED NOT NULL,
+    book_id BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    deleted_at TIMESTAMP NULL,
+    FOREIGN KEY (borrowing_id) REFERENCES borrowings (id) ON DELETE CASCADE,
+    FOREIGN KEY (book_id) REFERENCES books (id) ON DELETE CASCADE,
+    UNIQUE KEY unique_borrowing_book (borrowing_id, book_id)
+);
 
-### `carts`
-| Column | Type | Notes |
-|--------|------|-------|
-| id | bigint PK | |
-| user_id | FK→users | cascade delete |
-| book_id | FK→books | cascade delete |
-| UNIQUE(user_id, book_id) | | prevents duplicates |
+CREATE TABLE carts (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT UNSIGNED NOT NULL,
+    book_id BIGINT UNSIGNED NOT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    UNIQUE KEY unique_user_book (user_id, book_id),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (book_id) REFERENCES books (id) ON DELETE CASCADE
+);
 
 ---
 
@@ -261,10 +270,10 @@ All API responses follow `{success: bool, message: string, data?: ..., errors?: 
 - `StoreBorrowingRequest` — validates borrow_date, duration_days, book_ids
 - Custom `failedValidation()` returns 422 JSON for API routes
 - `LoginRequest` — lowercases email via `prepareForValidation()`
-- `RegisterRequest` — lowercases email via `validationData()` for case-insensitive uniqueness
+- `RegisterRequest` — lowercases email via `prepareForValidation()`
 
 ### API Resources
-- `BookResource` — id, title, author, stock
+- `BookResource` — id, title, author, stock, in_cart, cart_id, in_borrowing, borrowing (borrow_date, duration_days, return_date)
 - `CartResource` — id, book_id, book (loaded relation), created_at
 - `BorrowingResource` — id, user_id, borrow_date, duration_days, details
 - `BorrowingDetailResource` — id, book_id, book (loaded relation)
@@ -300,28 +309,12 @@ php artisan test --filter='test_search_case_insensitive'  # specific test
 |------|-------|----------|
 | LibraryApiTest | 6 | Core CRUD flow |
 | EdgeCaseSearchTest | 19 | Search edge cases |
-| EdgeCaseCartTest | 21 | Cart edge cases |
-| EdgeCaseBorrowingTest | 23 | Borrowing edge cases |
+| EdgeCaseCartTest | 22 | Cart edge cases |
+| EdgeCaseBorrowingTest | 24 | Borrowing edge cases |
 | EdgeCaseLoginTest | 17 | Login edge cases |
 | EdgeCaseRegistrationTest | 16 | Registration edge cases |
 | Auth/*Test | 8 | Breeze auth tests |
 | AdvancedLibraryTest | 5 | Integration flows |
 | ExampleTest | 1 | Sanity check |
 
-**Total: 119 tests, 263 assertions**
-
----
-
-## Improvements Applied
-
-### Critical
-- **LIKE injection fix**, **TOCTOU race condition** (lockForUpdate inside transaction), **N+1 → subquery** in BookController, **batch stock decrement** (N→1 UPDATE), **Eloquent createMany** (model events, auto-timestamps), **Extracted inline CSS/JS** (~1,900 lines) → Vite-bundled `app.css`/`app.js`, **Web register redirect** (204→302)
-
-### High  
-- **Pagination** (paginate 20), **Vite config**, **I18n** (hardcoded string → `__()` + lang files), **removed global Throwable handler**, **API rate limiting** (60 req/min), **return type hints** all controllers, **Bootstrap via npm** (no CDN), **server-side user name** (eliminated extra API call)
-
-### Medium
-- **FormRequests** (StoreCart, StoreBorrowing), **validation handler** (consistent 422 JSON), **BorrowingService** extracted, **API Resources** (4 resources), **SoftDeletes** on borrowings, **case-insensitive email**, **footer consolidated** into layout (DRY)
-
-### Low
-- **alert()→Toast** notification system, **cleanup** unused imports/CSS, **stock check** removed from cart add, **PSR formatting**, **commented dead code** removed
+**Total: 119 tests, 262 assertions**

@@ -33,7 +33,7 @@
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> <span id="user-name-header">{{ Auth::user()->name }}</span>
                     </button>
                     <div class="dropdown-menu" id="profile-dropdown">
-                        <a href="{{ route('profile.edit') }}">Profile</a>
+                        <a href="{{ route('profile.edit') }}">Profil</a>
                         <hr>
                         <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                             @csrf
@@ -84,7 +84,7 @@
                 <div class="container">
                     @yield('content')
                     <footer class="footer-text">
-                        &copy; {{ date('Y') }} Perpusku. All rights reserved.
+                        &copy; {{ date('Y') }} Perpusku. Hak cipta dilindungi undang-undang.
                     </footer>
                 </div>
             </main>

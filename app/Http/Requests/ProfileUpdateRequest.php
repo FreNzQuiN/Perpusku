@@ -17,4 +17,13 @@ class ProfileUpdateRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Nama lengkap harus diisi.',
+            'name.string' => 'Nama lengkap tidak valid.',
+            'name.max' => 'Nama lengkap maksimal 255 karakter.',
+        ];
+    }
 }

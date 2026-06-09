@@ -18,4 +18,12 @@ class StoreCartRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'book_id.required' => 'Buku harus dipilih.',
+            'book_id.exists' => 'Buku yang dipilih tidak tersedia.',
+        ];
+    }
+
 }

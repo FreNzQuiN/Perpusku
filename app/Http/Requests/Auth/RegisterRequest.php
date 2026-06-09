@@ -28,4 +28,19 @@ class RegisterRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Nama lengkap harus diisi.',
+            'name.string' => 'Nama lengkap tidak valid.',
+            'name.max' => 'Nama lengkap maksimal 255 karakter.',
+            'email.required' => 'Email harus diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.max' => 'Email maksimal 255 karakter.',
+            'email.unique' => 'Email sudah terdaftar.',
+            'password.required' => 'Password harus diisi.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+        ];
+    }
+
 }
