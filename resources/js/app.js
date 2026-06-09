@@ -467,9 +467,8 @@ const openConfirmModal = async () => {
     const modal = document.getElementById('confirm-modal');
     const container = document.getElementById('summary-container');
     const submitBtn = document.getElementById('submit-btn');
-    const errorDuration = document.getElementById('error-duration');
 
-    errorDuration.innerHTML = '';
+    document.getElementById('error-duration').innerHTML = '';
     submitBtn.disabled = false;
     submitBtn.innerText = 'Konfirmasi Pinjam';
 
